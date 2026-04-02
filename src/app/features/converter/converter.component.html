@@ -1,0 +1,41 @@
+<div class="container">
+  <mat-form-field appearance="outline">
+    <mat-label>Amount</mat-label>
+    <input matInput type="number" [(ngModel)]="amount" />
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>From</mat-label>
+    <mat-select [(ngModel)]="from">
+      <mat-option *ngFor="let c of currencies" [value]="c">{{ c }}</mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>To</mat-label>
+    <mat-select [(ngModel)]="to">
+      <mat-option *ngFor="let c of currencies" [value]="c">{{ c }}</mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Date</mat-label>
+    <input matInput [matDatepicker]="picker" (dateChange)="date = $event.value | date:'yyyy-MM-dd'" />
+    <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+    <mat-datepicker #picker></mat-datepicker>
+  </mat-form-field>
+
+  <button mat-raised-button color="primary" (click)="convert()" [disabled]="loading">
+    Convert
+  </button>
+
+  <mat-progress-spinner *ngIf="loading" mode="indeterminate"></mat-progress-spinner>
+
+  <h3>Result: {{ result }}</h3>
+
+  <h3>History</h3>
+  <div *ngFor="let item of history">
+    {{ item.amount }} {{ item.from }} → {{ item.to }} = {{ item.result }}
+    ({{ item.date }})
+  </div>
+</div>
