@@ -1,41 +1,121 @@
-<div class="container">
-  <mat-form-field appearance="outline">
-    <mat-label>Amount</mat-label>
-    <input matInput type="number" [(ngModel)]="amount" />
-  </mat-form-field>
+<div class="converter-container">
+  <mat-card class="converter-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>currency_exchange</mat-icon>
+        Currency Converter
+      </mat-card-title>
+    </mat-card-header>
 
-  <mat-form-field appearance="outline">
-    <mat-label>From</mat-label>
-    <mat-select [(ngModel)]="from">
-      <mat-option *ngFor="let c of currencies" [value]="c">{{ c }}</mat-option>
-    </mat-select>
-  </mat-form-field>
+    <mat-card-content>
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Amount</mat-label>
+          <input
+            matInput
+            type="number"
+            [(ngModel)]="amount"
+            placeholder="Enter amount"
+          />
+          <mat-icon matPrefix>attach_money</mat-icon>
+        </mat-form-field>
+      </div>
 
-  <mat-form-field appearance="outline">
-    <mat-label>To</mat-label>
-    <mat-select [(ngModel)]="to">
-      <mat-option *ngFor="let c of currencies" [value]="c">{{ c }}</mat-option>
-    </mat-select>
-  </mat-form-field>
+      <div class="currency-row">
+        <mat-form-field appearance="outline" class="half-width">
+          <mat-label>From</mat-label>
+          <mat-select [(ngModel)]="from">
+            <mat-option *ngFor="let c of currencies" [value]="c">{{
+              c
+            }}</mat-option>
+          </mat-select>
+        </mat-form-field>
 
-  <mat-form-field appearance="outline">
-    <mat-label>Date</mat-label>
-    <input matInput [matDatepicker]="picker" (dateChange)="onDateChange($event)" />
-    <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-    <mat-datepicker #picker></mat-datepicker>
-  </mat-form-field>
+        <button
+          mat-icon-button
+          (click)="swapCurrencies()"
+          class="swap-btn"
+          [disabled]="loading"
+        >
+          <mat-icon>swap_horiz</mat-icon>
+        </button>
 
-  <button mat-raised-button color="primary" (click)="convert()" [disabled]="loading">
-    Convert
-  </button>
+        <mat-form-field appearance="outline" class="half-width">
+          <mat-label>To</mat-label>
+          <mat-select [(ngModel)]="to">
+            <mat-option *ngFor="let c of currencies" [value]="c">{{
+              c
+            }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
 
-  <mat-progress-spinner *ngIf="loading" mode="indeterminate"></mat-progress-spinner>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Date (Optional)</mat-label>
+        <input
+          matInput
+          [matDatepicker]="picker"
+          (dateChange)="onDateChange($event)"
+          placeholder="Use latest rate"
+        />
+        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+      </mat-form-field>
 
-  <h3>Result: {{ result }}</h3>
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="convert()"
+        [disabled]="loading || !amount"
+        class="convert-btn"
+      >
+        <mat-icon>sync</mat-icon>
+        Convert
+      </button>
 
-  <h3>History</h3>
-  <div *ngFor="let item of history">
-    {{ item.amount }} {{ item.from }} → {{ item.to }} = {{ item.result }}
-    ({{ item.date }})
-  </div>
+      <mat-progress-spinner
+        *ngIf="loading"
+        mode="indeterminate"
+        class="spinner"
+      ></mat-progress-spinner>
+
+      <div class="result-container" *ngIf="result > 0">
+        <mat-card class="result-card">
+          <mat-card-content>
+            <div class="result-amount">{{ amount }} {{ from }}</div>
+            <mat-icon class="result-arrow">arrow_forward</mat-icon>
+            <div class="result-value">
+              {{ result | number: "1.2-2" }} {{ to }}
+            </div>
+            <div class="result-date" *ngIf="date">Rate from: {{ date }}</div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="history-card" *ngIf="history.length > 0">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>history</mat-icon>
+        Conversion History
+      </mat-card-title>
+      <button mat-button (click)="clearHistory()" class="clear-btn">
+        Clear
+      </button>
+    </mat-card-header>
+
+    <mat-card-content>
+      <mat-list>
+        <mat-list-item *ngFor="let item of history">
+          <mat-icon matListItemIcon>swap_horiz</mat-icon>
+          <div matListItemTitle>
+            {{ item.amount }} {{ item.from }} =
+            {{ item.result | number: "1.2-2" }} {{ item.to }}
+          </div>
+          <div matListItemLine>{{ item.date }}</div>
+        </mat-list-item>
+      </mat-list>
+    </mat-card-content>
+  </mat-card>
 </div>
