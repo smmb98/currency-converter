@@ -1,121 +1,220 @@
-<div class="converter-container">
-  <mat-card class="converter-card">
-    <mat-card-header>
-      <mat-card-title>
-        <mat-icon>currency_exchange</mat-icon>
-        Currency Converter
-      </mat-card-title>
-    </mat-card-header>
+<div class="page-wrapper">
+  <header class="app-header">
+    <div class="header-inner">
+      <mat-icon class="header-icon">currency_exchange</mat-icon>
+      <span class="header-title">Currency Converter</span>
+    </div>
+  </header>
 
-    <mat-card-content>
-      <div class="form-row">
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Amount</mat-label>
-          <input
-            matInput
-            type="number"
-            [(ngModel)]="amount"
-            placeholder="Enter amount"
-          />
-          <mat-icon matPrefix>attach_money</mat-icon>
-        </mat-form-field>
-      </div>
+  <main class="main-content">
+    <!-- Currencies loading/error banner -->
+    <div class="status-banner error-banner" *ngIf="currenciesError">
+      <mat-icon>wifi_off</mat-icon>
+      <span>{{ currenciesError }}</span>
+      <button mat-icon-button (click)="loadCurrencies()" matTooltip="Retry">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
 
-      <div class="currency-row">
-        <mat-form-field appearance="outline" class="half-width">
-          <mat-label>From</mat-label>
-          <mat-select [(ngModel)]="from">
-            <mat-option *ngFor="let c of currencies" [value]="c">{{
-              c
-            }}</mat-option>
-          </mat-select>
-        </mat-form-field>
+    <div class="status-banner info-banner" *ngIf="currenciesLoading">
+      <mat-icon>hourglass_top</mat-icon>
+      <span>Loading currencies…</span>
+    </div>
 
+    <!-- Converter card -->
+    <mat-card class="converter-card" [appLoadingSpinner]="converting">
+      <mat-card-content>
+        <!-- Amount -->
+        <div class="field-group">
+          <label class="field-label">Amount</label>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-icon matPrefix class="prefix-icon">payments</mat-icon>
+            <input
+              matInput
+              type="number"
+              [(ngModel)]="amount"
+              placeholder="0.00"
+              min="0.01"
+              (ngModelChange)="amountError = null; result = null"
+            />
+            <mat-error *ngIf="amountError">{{ amountError }}</mat-error>
+          </mat-form-field>
+          <div class="inline-error" *ngIf="amountError">{{ amountError }}</div>
+        </div>
+
+        <!-- Currency selectors -->
+        <div class="currency-row">
+          <div class="currency-field">
+            <label class="field-label">From</label>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-select
+                [(ngModel)]="from"
+                [disabled]="dropdownsDisabled"
+                (ngModelChange)="result = null; conversionError = null"
+              >
+                <mat-select-trigger>
+                  <span class="select-trigger">
+                    <span class="trigger-code">{{ from }}</span>
+                    <span class="trigger-name">{{
+                      getCurrencyName(from)
+                    }}</span>
+                  </span>
+                </mat-select-trigger>
+                <mat-option *ngFor="let c of currencies" [value]="c.code">
+                  <span class="currency-option">
+                    <span class="currency-code">{{ c.code }}</span>
+                    <span class="currency-name">{{ c.name }}</span>
+                  </span>
+                </mat-option>
+              </mat-select>
+              <mat-hint *ngIf="dropdownsDisabled && !currenciesLoading"
+                >Unavailable</mat-hint
+              >
+            </mat-form-field>
+          </div>
+
+          <button
+            mat-icon-button
+            class="swap-btn"
+            (click)="swapCurrencies()"
+            [disabled]="dropdownsDisabled || converting"
+            matTooltip="Swap currencies"
+          >
+            <mat-icon>swap_horiz</mat-icon>
+          </button>
+
+          <div class="currency-field">
+            <label class="field-label">To</label>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-select
+                [(ngModel)]="to"
+                [disabled]="dropdownsDisabled"
+                (ngModelChange)="result = null; conversionError = null"
+              >
+                <mat-select-trigger>
+                  <span class="select-trigger">
+                    <span class="trigger-code">{{ to }}</span>
+                    <span class="trigger-name">{{ getCurrencyName(to) }}</span>
+                  </span>
+                </mat-select-trigger>
+                <mat-option *ngFor="let c of currencies" [value]="c.code">
+                  <span class="currency-option">
+                    <span class="currency-code">{{ c.code }}</span>
+                    <span class="currency-name">{{ c.name }}</span>
+                  </span>
+                </mat-option>
+              </mat-select>
+              <mat-hint *ngIf="dropdownsDisabled && !currenciesLoading"
+                >Unavailable</mat-hint
+              >
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Date picker -->
+        <div class="field-group">
+          <label class="field-label">
+            Date
+            <span class="field-label-hint"
+              >(optional — leave blank for latest rate)</span
+            >
+          </label>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-icon matPrefix class="prefix-icon">calendar_today</mat-icon>
+            <input
+              matInput
+              [matDatepicker]="picker"
+              [value]="selectedDate"
+              [max]="maxDate"
+              (dateChange)="onDateChange($event)"
+              placeholder="Use latest rate"
+              readonly
+            />
+            <mat-datepicker-toggle
+              matSuffix
+              [for]="picker"
+            ></mat-datepicker-toggle>
+            <mat-datepicker #picker [startAt]="maxDate"></mat-datepicker>
+          </mat-form-field>
+          <button
+            *ngIf="formattedDate"
+            mat-button
+            class="clear-date-btn"
+            (click)="clearDate()"
+          >
+            <mat-icon>close</mat-icon> Clear date
+          </button>
+        </div>
+
+        <!-- Conversion error -->
+        <div class="inline-error conversion-error" *ngIf="conversionError">
+          <mat-icon>error_outline</mat-icon>
+          {{ conversionError }}
+        </div>
+
+        <!-- Convert button -->
         <button
-          mat-icon-button
-          (click)="swapCurrencies()"
-          class="swap-btn"
-          [disabled]="loading"
+          mat-flat-button
+          class="convert-btn"
+          (click)="convert()"
+          [disabled]="converting || dropdownsDisabled"
         >
-          <mat-icon>swap_horiz</mat-icon>
+          <mat-icon>bolt</mat-icon>
+          {{ converting ? "Converting…" : "Convert" }}
         </button>
 
-        <mat-form-field appearance="outline" class="half-width">
-          <mat-label>To</mat-label>
-          <mat-select [(ngModel)]="to">
-            <mat-option *ngFor="let c of currencies" [value]="c">{{
-              c
-            }}</mat-option>
-          </mat-select>
-        </mat-form-field>
-      </div>
-
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Date (Optional)</mat-label>
-        <input
-          matInput
-          [matDatepicker]="picker"
-          (dateChange)="onDateChange($event)"
-          placeholder="Use latest rate"
-        />
-        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-        <mat-datepicker #picker></mat-datepicker>
-      </mat-form-field>
-
-      <button
-        mat-raised-button
-        color="primary"
-        (click)="convert()"
-        [disabled]="loading || !amount"
-        class="convert-btn"
-      >
-        <mat-icon>sync</mat-icon>
-        Convert
-      </button>
-
-      <mat-progress-spinner
-        *ngIf="loading"
-        mode="indeterminate"
-        class="spinner"
-      ></mat-progress-spinner>
-
-      <div class="result-container" *ngIf="result > 0">
-        <mat-card class="result-card">
-          <mat-card-content>
-            <div class="result-amount">{{ amount }} {{ from }}</div>
-            <mat-icon class="result-arrow">arrow_forward</mat-icon>
-            <div class="result-value">
-              {{ result | number: "1.2-2" }} {{ to }}
-            </div>
-            <div class="result-date" *ngIf="date">Rate from: {{ date }}</div>
-          </mat-card-content>
-        </mat-card>
-      </div>
-    </mat-card-content>
-  </mat-card>
-
-  <mat-card class="history-card" *ngIf="history.length > 0">
-    <mat-card-header>
-      <mat-card-title>
-        <mat-icon>history</mat-icon>
-        Conversion History
-      </mat-card-title>
-      <button mat-button (click)="clearHistory()" class="clear-btn">
-        Clear
-      </button>
-    </mat-card-header>
-
-    <mat-card-content>
-      <mat-list>
-        <mat-list-item *ngFor="let item of history">
-          <mat-icon matListItemIcon>swap_horiz</mat-icon>
-          <div matListItemTitle>
-            {{ item.amount }} {{ item.from }} =
-            {{ item.result | number: "1.2-2" }} {{ item.to }}
+        <!-- Result -->
+        <div class="result-panel" *ngIf="result !== null">
+          <div class="result-from">{{ amount }} {{ from }}</div>
+          <mat-icon class="result-equals">drag_handle</mat-icon>
+          <div class="result-to">{{ result | number: "1.2-6" }} {{ to }}</div>
+          <div class="result-rate">
+            1 {{ from }} = {{ resultRate | number: "1.4-6" }} {{ to }}
+            <span *ngIf="formattedDate"> · Rate from {{ formattedDate }}</span>
+            <span *ngIf="!formattedDate"> · Live rate</span>
           </div>
-          <div matListItemLine>{{ item.date }}</div>
-        </mat-list-item>
-      </mat-list>
-    </mat-card-content>
-  </mat-card>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- History card -->
+    <mat-card class="history-card" *ngIf="history.length > 0">
+      <div class="history-header">
+        <div class="history-title">
+          <mat-icon class="header-icon">history</mat-icon>
+          Recent Conversions
+        </div>
+        <button mat-button class="clear-history-btn" (click)="clearHistory()">
+          <mat-icon>delete_outline</mat-icon>
+          Clear
+        </button>
+      </div>
+      <div class="history-list">
+        <div class="history-item" *ngFor="let item of history">
+          <div class="history-main">
+            <span class="history-amount"
+              >{{ item.amount | number: "1.2-2" }} {{ item.from }}</span
+            >
+            <mat-icon class="history-arrow">arrow_forward</mat-icon>
+            <span class="history-result"
+              >{{ item.result | number: "1.2-2" }} {{ item.to }}</span
+            >
+          </div>
+          <div class="history-meta">
+            <span class="history-rate"
+              >1 {{ item.from }} = {{ item.rate | number: "1.4-4" }}
+              {{ item.to }}</span
+            >
+            <span class="history-dot">·</span>
+            <span class="history-date">{{
+              item.date === "latest" ? "Live rate" : item.date
+            }}</span>
+          </div>
+          <div class="history-timestamp">
+            {{ formatTimestamp(item.timestamp) }}
+          </div>
+        </div>
+      </div>
+    </mat-card>
+  </main>
 </div>

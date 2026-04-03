@@ -13,14 +13,17 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { AppComponent } from './app.component';
 import { ConverterComponent } from './features/converter/converter.component';
+import { LoadingSpinnerDirective } from './shared/directives/loading-spinner.directive';
 
 @NgModule({
   declarations: [
     AppComponent,
-    ConverterComponent
+    ConverterComponent,
+    LoadingSpinnerDirective
   ],
   imports: [
     BrowserModule,
@@ -36,7 +39,8 @@ import { ConverterComponent } from './features/converter/converter.component';
     MatProgressSpinnerModule,
     MatCardModule,
     MatIconModule,
-    MatListModule
+    MatListModule,
+    MatTooltipModule
   ],
   providers: [],
   bootstrap: [AppComponent]
