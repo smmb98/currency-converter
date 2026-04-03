@@ -234,12 +234,22 @@ $radius-sm: 8px;
   margin: 30px 4px 0;
   background: $primary-light !important;
   border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   transition:
     transform 0.3s ease,
     background 0.2s ease !important;
 
   mat-icon {
     color: $primary;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    font-size: 24px;
+    line-height: 24px;
   }
 
   &:hover:not([disabled]) {
@@ -549,6 +559,13 @@ $radius-sm: 8px;
 
   .mat-mdc-card {
     --mdc-elevated-card-container-color: #{$surface};
+  }
+
+  .swap-btn .mat-mdc-button-touch-target,
+  .swap-btn .mat-mdc-focus-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 
