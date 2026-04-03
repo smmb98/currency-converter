@@ -6,7 +6,7 @@ import {
   Renderer2,
 } from '@angular/core';
 
-@Directive({ selector: '[appLoadingSpinner]' })
+@Directive({ selector: '[appLoadingSpinner]', standalone: true })
 export class LoadingSpinnerDirective implements OnChanges {
   @Input() appLoadingSpinner = false;
 

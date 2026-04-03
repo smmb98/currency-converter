@@ -94,7 +94,7 @@ $radius-sm: 8px;
   &.error-banner {
     background: $error-light;
     color: $error;
-    border: 1px solid lighten($error, 30%);
+    border: 1px solid #f1998e;
     mat-icon {
       color: $error;
     }
@@ -106,7 +106,7 @@ $radius-sm: 8px;
   &.info-banner {
     background: $primary-light;
     color: $primary-dark;
-    border: 1px solid lighten($primary, 30%);
+    border: 1px solid #a8c7fa;
     mat-icon {
       color: $primary;
     }
@@ -244,7 +244,7 @@ $radius-sm: 8px;
 
   &:hover:not([disabled]) {
     transform: rotate(180deg);
-    background: darken($primary-light, 5%) !important;
+    background: #d2e3fc !important;
   }
 
   &[disabled] {
@@ -290,7 +290,7 @@ $radius-sm: 8px;
 
   &.conversion-error {
     background: $error-light;
-    border: 1px solid lighten($error, 30%);
+    border: 1px solid #f1998e;
     border-radius: $radius-sm;
     padding: 10px 12px;
     margin-bottom: 8px;

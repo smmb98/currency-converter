@@ -1,14 +1,41 @@
 import { Component, OnInit } from '@angular/core';
-import { Observable, EMPTY } from 'rxjs';
+import { CommonModule, DecimalPipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatSelectModule } from '@angular/material/select';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { catchError, finalize } from 'rxjs/operators';
+import { EMPTY, Observable } from 'rxjs';
 import { CurrencyService } from '../../core/currency.service';
 import { CurrencyMeta, HistoryRecord } from '../../core/models/currency.models';
+import { LoadingSpinnerDirective } from '../../shared/directives/loading-spinner.directive';
 
 const HISTORY_KEY = 'conversion_history';
 const MAX_HISTORY = 20;
 
 @Component({
   selector: 'app-converter',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatButtonModule,
+    MatCardModule,
+    MatDatepickerModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatInputModule,
+    MatNativeDateModule,
+    MatSelectModule,
+    MatTooltipModule,
+    LoadingSpinnerDirective,
+  ],
   templateUrl: './converter.component.html',
   styleUrls: ['./converter.component.scss'],
 })
@@ -50,19 +77,18 @@ export class ConverterComponent implements OnInit {
     this.currenciesError = null;
     this.currencies = [];
 
-    this.pipe$(this.currencyService.getCurrencies(), () => {
-      this.currenciesLoading = false;
-    }).subscribe({
-      next: (res: any) => {
-        this.currencies = Object.values(res.data).sort((a: any, b: any) =>
-          a.code.localeCompare(b.code)
-        ) as CurrencyMeta[];
-        this.from = 'USD';
-        this.to = 'EUR';
-      },
-      error: (err: Error) => {
+    this.currencyService.getCurrencies().pipe(
+      catchError((err: Error) => {
         this.currenciesError = err.message;
-      },
+        return EMPTY;
+      }),
+      finalize(() => (this.currenciesLoading = false))
+    ).subscribe((res) => {
+      this.currencies = Object.values(res.data).sort((a, b) =>
+        a.code.localeCompare(b.code)
+      );
+      this.from = 'USD';
+      this.to = 'EUR';
     });
   }
 
@@ -108,35 +134,27 @@ export class ConverterComponent implements OnInit {
       ? this.currencyService.getHistorical(this.from, this.formattedDate)
       : this.currencyService.getLatest(this.from);
 
-    this.pipe$(src$, () => {
-      this.converting = false;
-    }).subscribe({
-      next: (res: any) => {
-        const rates = this.formattedDate
-          ? res.data[this.formattedDate]
-          : res.data;
-
-        if (!rates || rates[this.to] === undefined) {
-          this.conversionError = `Exchange rate for ${this.to} is not available.`;
-          return;
-        }
-
-        const rate: number = rates[this.to];
-        this.result = this.amount! * rate;
-        this.resultRate = rate;
-        this.saveHistory(rate);
-      },
-      error: (err: Error) => {
+    (src$ as Observable<any>).pipe(
+      catchError((err: Error) => {
         this.conversionError = err.message;
-      },
-    });
-  }
+        return EMPTY;
+      }),
+      finalize(() => (this.converting = false))
+    ).subscribe((res) => {
+      const rates = this.formattedDate
+        ? res.data[this.formattedDate]
+        : res.data;
 
-  private pipe$(source$: Observable<any>, onFinalize: () => void): Observable<any> {
-    return source$.pipe(
-      catchError((err: Error) => { throw err; }),
-      finalize(onFinalize)
-    );
+      if (!rates || rates[this.to] === undefined) {
+        this.conversionError = `Exchange rate for ${this.to} is not available.`;
+        return;
+      }
+
+      const rate: number = rates[this.to];
+      this.result = this.amount! * rate;
+      this.resultRate = rate;
+      this.saveHistory(rate);
+    });
   }
 
   private validateForm(): boolean {
@@ -219,6 +237,6 @@ export class ConverterComponent implements OnInit {
   }
 
   getCurrencyName(code: string): string {
-    return this.currencies.find(c => c.code === code)?.name ?? '';
+    return this.currencies.find((c) => c.code === code)?.name ?? '';
   }
 }
